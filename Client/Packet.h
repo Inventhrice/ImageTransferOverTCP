@@ -4,7 +4,7 @@
 enum STATE { UPLOAD, REQUEST, SYNC, AUTH };
 
 const int BODY_LENGTH_MAX = 512;
-
+const int PACKET_SIZE_MAX = sizeof(STATE) + sizeof(unsigned int) + sizeof(bool) + sizeof(unsigned short) + sizeof(char) + 512;
 class Packet {
 private:
 	//PacketHeader object, containing protocol information. More information can be found in the PacketHeader's header file.
@@ -47,6 +47,10 @@ public:
 
 	unsigned short getLength() {
 		return this->Head.body_length;
+	}
+
+	bool getLast() {
+		return this->Head.packet_last;
 	}
 
 	void setData(char* srcData, int size) {

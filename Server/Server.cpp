@@ -55,7 +55,7 @@ int main()
 
 	cout << "connected!" << endl;
 
-	char rxBuf[524];
+	char rxBuf[PACKET_SIZE_MAX];
 	bool last = false;
 	ofstream file;
 	file.open("rxlowpoly.jpg", ios::binary);
@@ -67,9 +67,10 @@ int main()
 			recv(ConnectionSocket, rxBuf, sizeof(rxBuf), 0);
 			cout << "recieved!" << endl;
 			Packet pkt = Packet(rxBuf);
+			last = pkt.getLast();
 			file.write(pkt.getData(), pkt.getLength());
 			counter++;
-		} while (counter < 125);
+		} while (!last);
 		file.close();
 	}
 	
