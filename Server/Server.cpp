@@ -1,3 +1,10 @@
+/*
+This is the reciving side of this ImageTransfer. A lot of this is draft code, as it was made to be a 
+proof of concept for another project being worked on.
+
+Thank you to Benjamin Smith for helping me with understanding the code.
+*/
+
 #include "../Client/Packet.h"
 #include <fstream>
 #include <vector>
@@ -55,21 +62,27 @@ int main()
 
 	cout << "connected!" << endl;
 
-	char rxBuf[PACKET_SIZE_MAX];
-	bool last = false;
+	char rxBuf[PACKET_SIZE_MAX]; // a reciving buffer set to the max size of a packet
+	bool last = false; // variable to determine if the packet recieved is the last one
+	string fileName = "rxlowpoly.jpg"; //variable to hold file name
+
 	ofstream file;
-	file.open("rxlowpoly.jpg", ios::binary);
+	file.open(fileName, ios::binary);
 	Packet pkt;
-	int counter = 0;
+	//int counter = 0;
 	if (file.is_open()) {
 		do {
 			strcpy_s(rxBuf, sizeof(rxBuf), "");
+			
 			recv(ConnectionSocket, rxBuf, sizeof(rxBuf), 0);
 			cout << "recieved!" << endl;
-			Packet pkt = Packet(rxBuf);
-			last = pkt.getLast();
-			file.write(pkt.getData(), pkt.getLength());
-			counter++;
+
+			//Deserializes the data from the recv function
+			Packet pkt = Packet(rxBuf); 
+			
+			last = pkt.getLast(); //gets if this is the last packet
+			file.write(pkt.getData(), pkt.getLength()); //writes the binary data into an ofstream
+			//counter++; increments the number of packets recieved (debug purposes)
 		} while (!last);
 		file.close();
 	}
@@ -79,4 +92,3 @@ int main()
 	closesocket(ServerSocket);	    //closes server socket	
 	WSACleanup();					//frees Winsock resources
 }
-

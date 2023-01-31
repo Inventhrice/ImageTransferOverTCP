@@ -1,12 +1,13 @@
 #pragma once
 #include <memory>
 
-enum STATE { UPLOAD, REQUEST, SYNC, AUTH };
+enum STATE { UPLOAD, REQUEST, SYNC, AUTH }; // states of a packet
 
-const int BODY_LENGTH_MAX = 512;
-const int PACKET_SIZE_MAX = sizeof(STATE) + sizeof(unsigned int) + sizeof(bool) + sizeof(unsigned short) + sizeof(char) + 512;
+const int BODY_LENGTH_MAX = 512; //Size of the body
+const int PACKET_SIZE_MAX = sizeof(STATE) + sizeof(unsigned int) + sizeof(bool) + sizeof(unsigned short) + sizeof(char) + BODY_LENGTH_MAX; //Max size of a packet
 class Packet {
 private:
+	// Thanks to Benjamin Smith (benjaminpsmith on github) for helping me get started with this code
 	//PacketHeader object, containing protocol information. More information can be found in the PacketHeader's header file.
 	struct Header
 	{

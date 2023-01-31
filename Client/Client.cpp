@@ -1,3 +1,10 @@
+/*
+This is the sending side of this ImageTransfer. A lot of this is draft code, as it was made to be a
+proof of concept for another project being worked on.
+
+Thank you to Benjamin Smith for helping me with understanding the code.
+*/
+
 #include "Packet.h"
 #include <fstream>
 #include <vector>
@@ -9,8 +16,8 @@
 using namespace std;
 
 //Serializes the Packet object into a char* to prepare for sending via sockets.
-void SerializeFile(vector<char*> &pktHold, vector<int> &sizePkt, string filename) {
-	int numWholePackets = 0, numPartPackets = 0;
+void SerializeFile(vector<char*> &pktHold, int sizePkt[], string filename) {
+	int numWholePackets = 0, sizeOfPartPkt = 0;
 	Packet pkt;
 
 	ifstream file;
@@ -18,29 +25,28 @@ void SerializeFile(vector<char*> &pktHold, vector<int> &sizePkt, string filename
 
 	if (file.is_open()) {
 		file.seekg(0, ios::end);
-		size_t fileSize = (size_t)file.tellg();
+		size_t fileSize = (size_t)file.tellg(); //gets the file size
 		file.seekg(0);
 
-		numWholePackets = fileSize / BODY_LENGTH_MAX;
-		numPartPackets = fileSize % BODY_LENGTH_MAX;
+		sizePkt[0] = fileSize / BODY_LENGTH_MAX; //determines the amount of max capacity packets to be sent
+		sizePkt[1] = fileSize % BODY_LENGTH_MAX; //determines the length of the remainder of the data left
 		bool last = false;
 		int packetLength = BODY_LENGTH_MAX;
 
-		for (int i = 0; i <= numWholePackets; i++) {
+		for (int i = 0; i <= sizePkt[0]; i++) {
 
-			if (i == numWholePackets) {
-				packetLength = numPartPackets;
+			if (i == sizePkt[0]) {
+				packetLength = sizeOfPartPkt;
 				last = true;
 			}
 			char* packetBody = new char[packetLength * sizeof(char)];
 			file.read(packetBody, packetLength);
 
-			pkt.setHeader(SYNC, i + 1, last, packetLength);
+			pkt.setHeader(SYNC, i + 1, last, packetLength); //hardcoded a SYNC state, once again, this is test code.
 			pkt.setData(packetBody, packetLength);
 
 			int size = 0;
 			pktHold.push_back(pkt.SerializePacket(&size));
-			sizePkt.push_back(size);
 		}
 	}
 }
@@ -72,12 +78,20 @@ int main()
 		return 0;
 	}
 
-	vector<char*> pktHold;
-	vector<int> sizePkt;
+	vector<char*> pktHold; //vector to hold all the seralized data pointers
+	
+	int sizePkt[2]; //This int array holds two values. The first value is the number of whole packets, the second is the size of the remainder data
+	//vector<int> sizePkt; 
+
 	SerializeFile(pktHold, sizePkt, "lowpoly.jpg");
+	int sizeTx = PACKET_SIZE_MAX; //variable to hold the size of transmission
 
 	for(int i = 0; i < pktHold.size(); i++){
-		send(ClientSocket, pktHold.at(i), sizePkt.at(i), 0);
+
+		//This checks if i is above the number of whole packets, in which case we need to modify the size of the transmission
+		if (i > sizePkt[0]) sizeTx = sizePkt[1]; 
+
+		send(ClientSocket, pktHold.at(i), sizeTx, 0);
 		cout << "sent!" << endl;
 		Sleep(10);
 	}
